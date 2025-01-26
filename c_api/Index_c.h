@@ -36,6 +36,7 @@ typedef enum FaissMetricType {
     METRIC_Canberra = 20,
     METRIC_BrayCurtis,
     METRIC_JensenShannon,
+    METRIC_Poincare,
 } FaissMetricType;
 
 FAISS_DECLARE_CLASS(SearchParameters)

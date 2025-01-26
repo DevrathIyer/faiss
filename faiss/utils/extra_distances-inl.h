@@ -163,6 +163,20 @@ inline float VectorDistance<METRIC_ABS_INNER_PRODUCT>::operator()(
     return accu;
 }
 
+template <>
+inline float VectorDistance<METRIC_Poincare>::operator()(
+        const float* x,
+        const float* y) const {
+    float norm_x = 1, norm_y = 1;
+    float l2 = fvec_L2sqr(x, y, d);
+    for (size_t i = 0; i < d; i++) {
+        norm_x -= x[i] * x[i];
+        norm_y -= y[i] * y[i];
+    }
+    //return pdist = acosh(1 + (2 * l2) / (norm_x * norm_y));
+    return l2/(norm_x * norm_y);
+}
+
 /***************************************************************************
  * Dispatching function that takes a metric type and a consumer object
  * the consumer object should contain a retun type T and a operation template
@@ -194,6 +208,7 @@ typename Consumer::T dispatch_VectorDistance(
         DISPATCH_VD(METRIC_Jaccard);
         DISPATCH_VD(METRIC_NaNEuclidean);
         DISPATCH_VD(METRIC_ABS_INNER_PRODUCT);
+        DISPATCH_VD(METRIC_Poincare);
         default:
             FAISS_THROW_FMT("Invalid metric %d", metric);
     }

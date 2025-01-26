@@ -38,6 +38,7 @@ enum MetricType {
     METRIC_NaNEuclidean,
     /// abs(x | y): the distance to a hyperplane
     METRIC_ABS_INNER_PRODUCT,
+    METRIC_Poincare,
 };
 
 /// all vector indices are this type
