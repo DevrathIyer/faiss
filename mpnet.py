@@ -1,4 +1,5 @@
 import pickle
+import time
 from functools import partial
 
 import numpy as np
@@ -26,22 +27,35 @@ print("[setup] Done!")
 d = hyper_pass.shape[-1]
 K = 1000
 Q = 100
+print(q.shape)
+print(hyper_pass.shape)
 
 
 def recall_at(K, I, a, queries):
     return np.mean((I[:, :K, None] == a[queries, None, :]).any(axis=(-1, -2)))
 
 
-def test_index(index, pass_data, query_data, queries):
-    assert index.is_trained
-    index.add(pass_data)  # add vectors to the index
-    print("Done building index")
-    _, I = index.search(query_data[queries], K)
+def test_index(index, pass_data, query_data, queries, filename=None):
+    if filename is not None:
+        start = time.time()
+        index = faiss.read_index(filename)
+        print("Done reading index in %d seconds" % (time.time() - start))
+    else:
+        start = time.time()
+        assert index.is_trained
+        index.add(pass_data)  # add vectors to the index
+        print("Done building index in %d seconds" % (time.time() - start))
 
+    start = time.time()
+    _, I = index.search(query_data[queries], K)
+    print("Done searching in %d seconds" % (time.time() - start))
+
+    start = time.time()
     r10 = recall_at(10, I, a, queries)
     r100 = recall_at(100, I, a, queries)
     r1000 = recall_at(1000, I, a, queries)
 
+    print("Done calculating recall in %d seconds" % (time.time() - start))
     print(f"Recall@10: {r10:.4f}")
     print(f"Recall@100: {r100:.4f}")
     print(f"Recall@1000: {r1000:.4f}")
@@ -67,10 +81,11 @@ def test_hyper_ivf():
 
 def test_hyper_hnsw():
     print("HYPER HNSW")
-    index = faiss.IndexHNSWFlat(d, 32, faiss.METRIC_Poincare)  # build the index
-    test_index(index, hyper_pass, hyper_query, q[:Q])
+    # index = faiss.IndexHNSWFlat(d, 32, faiss.METRIC_Poincare)  # build the index
+    test_index(None, hyper_pass, hyper_query, q, filename="hnsw.bin")
+    # faiss.write_index(index, "hnsw.bin")
 
 
 if __name__ == "__main__":
     test_hyper_hnsw()
-    test_hyper_flat()
+    # test_hyper_flat()
