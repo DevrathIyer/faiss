@@ -39,7 +39,7 @@ def recall_at(K, I, a, queries):
 def test_hnsw_index(index, pass_data, query_data, queries, filename):
     if index is None:
         start = time.time()
-        index = faiss.read_index(filename)
+        index = faiss.read_index(f"{data_dir}{filename}")
         print("Done reading index in %.2f seconds" % (time.time() - start))
     else:
         start = time.time()
@@ -111,7 +111,7 @@ def test_arange_hyper_hnsw(read=False):
         assert levels.shape[0] == hyper_pass.shape[0]
         faiss.copy_array_to_vector(levels, index.hnsw.levels)
 
-    test_hnsw_index(None if read else index, hyper_pass, hyper_query, q, filename="hnsw_arange.bin")
+    test_hnsw_index(None if read else index, hyper_pass, hyper_query, q, filename="hnsw_arange_backup.bin")
 
 def test_rand_hyper_hnsw(read=False):
     print("HYPER RAND HNSW")
@@ -137,12 +137,30 @@ def test_norm_hyper_hnsw(read=False):
         norms = np.linalg.norm(hyper_pass, axis=-1)
         norm_idx = np.argsort(norms)
         sort_hyper_pass = hyper_pass[norm_idx]
+        print(sort_hyper_pass.shape)
 
     test_hnsw_index(None if read else index, sort_hyper_pass, hyper_query, q, filename="hnsw_norm.bin")
 
+def test_rev_norm_hyper_hnsw(read=False):
+    print("HYPER REV NORM HNSW")
+    
+    if not read:
+        index = faiss.IndexHNSWFlat(d, 32, faiss.METRIC_Poincare)  # build the index
+        levels = np.concatenate((np.repeat(1, 5), np.repeat(2, 250), np.repeat(3, 8405),np.repeat(4, 267641), np.repeat(5, 8565522))).astype(np.int32)
+        assert levels.shape[0] == hyper_pass.shape[0]
+        levels = faiss.copy_array_to_vector(levels, index.hnsw.levels)
+
+        norms = np.linalg.norm(hyper_pass, axis=-1)
+        norm_idx = np.argsort(norms)
+        sort_hyper_pass = (hyper_pass[norm_idx])[::-1]
+        print(sort_hyper_pass.shape)
+
+    test_hnsw_index(None if read else index, sort_hyper_pass, hyper_query, q, filename="hnsw_rev_norm.bin")
+
 if __name__ == "__main__":
-    # test_hyper_flat()
+    test_hyper_flat()
     # test_hyper_hnsw()
     #test_rand_hyper_hnsw()
-    #test_arange_hyper_hnsw()
-    test_norm_hyper_hnsw()
+    #test_arange_hyper_hnsw(read=True)
+    #test_rev_norm_hyper_hnsw()
+    #test_norm_hyper_hnsw()
